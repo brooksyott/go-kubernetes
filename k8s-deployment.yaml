@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment                 # Type of Kubernetes resource
+metadata:
+  name: go-hellokube           # Name of the Kubernetes resource
+spec:
+  replicas: 2                    # Number of pods to run at any given time
+  selector:
+    matchLabels:
+      app: go-hellokube        # This deployment applies to any Pods matching the specified label
+  template:                      # This deployment will create a set of pods using the configurations in this template
+    metadata:
+      labels:                    # The labels that will be applied to all of the pods in this deployment
+        app: go-hellokube
+    spec:                        # Spec for the container which will run in the Pod
+      containers:
+        - name: go-hellokube
+          image: brooksy/go-hellokube:v0.01
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000  # Should match the port number that the Go application listens on
+          livenessProbe:           # To check the health of the Pod
+            httpGet:
+              path: /health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:          # To check if the Pod is ready to serve traffic or not
+            httpGet:
+              path: /readiness
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-hellokube
+spec:
+  selector:
+    app: go-hellokube
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+---
+#
+# The konghq.com/strip-path: "true" will strip off the path
+# whatever is defined in the http paths path file (ie. /test)
+# so that if you send /test/hi, the microservice just sees /hi
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: go-hellokube
+  namespace: default
+  annotations:
+    konghq.com/strip-path: "true"
+spec:
+  ingressClassName: kong
+  rules:
+    - http:
+        paths:
+          - path: /test
+            pathType: Prefix
+            backend:
+              service:
+                name: go-hellokube
+                port:
+                  number: 80
