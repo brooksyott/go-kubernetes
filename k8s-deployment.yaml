@@ -34,6 +34,14 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 5
             timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 4000m
+              memory: 128Mi
+            requests:
+                cpu: 4000m
+                memory: 256Mi
+
 ---
 apiVersion: v1
 kind: Service
