@@ -6,7 +6,8 @@ import { sleep } from 'k6';
 export default function () {
   const params = { tags: { my_tag: 'hello' } };
   const randomUUID = uuidv4();
-  const url = 'ws://localhost/test/ws/' + randomUUID;
+  // const url = 'ws://localhost/test/ws/' + randomUUID;
+  const url = 'ws://localhost:3000/ws/' + randomUUID;
 
   const res = ws.connect(url, null, function (socket) {
     socket.on('open', () =>  {
