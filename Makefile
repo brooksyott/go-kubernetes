@@ -21,6 +21,7 @@ ifeq ($(OS),Windows_NT)
 	RM_EXEC = del $(BIN_DIR)\$(EXECUTABLE)$(FILEEXTENSION)
 	CP_EXEC = copy $(BIN_DIR)\$(GOOS)$(GOARCH)\$(EXECUTABLE)$(FILEEXTENSION) $(BIN_DIR)\$(EXECUTABLE)$(FILEEXTENSION)
 	CP_LINUX_AMD64 = copy $(BIN_DIR)\linuxamd64\$(EXECUTABLE) $(BIN_DIR)\$(EXECUTABLE)
+	CP_LINUX_ARM64 = copy $(BIN_DIR)\linuxarm64\$(EXECUTABLE) $(BIN_DIR)\$(EXECUTABLE)
 
 	# Create the compile statements for each OS	and architecture type
 	FREEBSD_AMD64 = cmd /V /C "set GOOS=freebsd&&set GOARCH=amd64&& go build -o $(BIN_DIR)/freebsdamd64/$(EXECUTABLE)"
@@ -57,6 +58,7 @@ else
 	RM_EXEC = rm -f $(BIN_DIR)/$(EXECUTABLE)$(FILEEXTENSION)
 	CP_EXEC = cp $(BIN_DIR)/$(GOOS)$(GOARCH)/$(EXECUTABLE)$(FILEEXTENSION) $(BIN_DIR)/$(EXECUTABLE)$(FILEEXTENSION)
 	CP_LINUX_AMD64 = cp $(BIN_DIR)/linuxamd64/$(EXECUTABLE) $(BIN_DIR)/$(EXECUTABLE)
+	CP_LINUX_ARM64 = cp $(BIN_DIR)/linuxarm64/$(EXECUTABLE) $(BIN_DIR)/$(EXECUTABLE)
 
 	# Create the compile statements for each OS	and architecture type
 	FREEBSD_AMD64 = GOOS=freebsd GOARCH=amd64 go build -o $(BIN_DIR)/freebsdamd64/$(EXECUTABLE)
@@ -73,10 +75,15 @@ all: clean build run
 run:
 	$(BIN_DIR)/$(EXECUTABLE)$(FILEEXTENSION)
 
+dockerarm:
+	$(LINUX_ARM64)
+	$(CP_LINUX_ARM64)
+	docker buildx build --platform linux/arm64 -t $(DOCKERIMAGE):$(DOCKERTAG) -f Dockerfile .
+
 docker:
 	$(LINUX_AMD64)
 	$(CP_LINUX_AMD64)
-	docker build -t $(DOCKERIMAGE):$(DOCKERTAG) -f Dockerfile .
+	docker buildx build --platform linux/amd64 -t $(DOCKERIMAGE):$(DOCKERTAG) -f Dockerfile .
 
 k8sup:
 	kubectl create -f ./k8s-deployment.yaml
